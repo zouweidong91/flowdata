@@ -1,0 +1,10 @@
+*.pyc
+*.checkpoints/
+notebooks/
+logs/
+.vscode/
+__pycache__
+
+dist
+build
+*.egg-info
