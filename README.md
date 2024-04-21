@@ -17,7 +17,7 @@ pip install flowdata
 代码中通过add_task将任务加载到任务流中，且可以根据需要指定不同进程数量
 
 ```python
-
+import time
 from flowdata import FlowBase
 from flowdata import add_task
 
@@ -39,10 +39,10 @@ TaskFlow().main()
 ```
 
 ## 2、多任务
-假设一个处理数据的任务可以细分为多个子任务，例如，task_a, task_b。
+假设一个处理数据的任务可以细分为多个子任务，例如，task_a, task_b。任务执行按照task的添加顺序执行。
 
 ```python
-
+import time
 from flowdata import FlowBase
 from flowdata import add_task
 

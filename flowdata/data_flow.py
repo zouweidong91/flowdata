@@ -6,12 +6,10 @@
 from collections import Counter
 from typing import Generator
 
-from flowdata.task import Task, add_task, TASK_LIST
-
 from ._logger import logger
 from .data_parallel import DataParallel
-from .decorator import err_catch, timer, tps, interrupt_catch
-
+from .decorator import err_catch, interrupt_catch, timer, tps
+from .task import TASK_LIST, Task
 
 
 class FlowBase:
@@ -79,12 +77,6 @@ class FlowBase:
                 yield item
 
 
-    @add_task(work_num=1)
-    @err_catch()
-    def process_fn(self, item: dict, *args, **kwargs) -> dict:
-        return item
-
-    
     def exec_task(self, item_iter, task:Task):
         """执行单task
         """
@@ -100,11 +92,19 @@ class FlowBase:
         """执行多task， TASK_LIST中上一个task的输出是下一个task的输入
         """
         for task in TASK_LIST:
-            if not hasattr(self, task.func_name):
-                continue
+            if task.class_name!=self.__class__.__name__: continue
+            if not hasattr(self, task.func_name): continue
             item_iter = self.exec_task(item_iter, task)
 
         return item_iter
+
+
+    def print_task(self):
+        num = 0
+        for task in TASK_LIST:
+            if task.class_name!=self.__class__.__name__: continue
+            num += 1
+            logger.info("task_%s: %s", num, task)
 
 
     @timer("main")
@@ -116,6 +116,7 @@ class FlowBase:
             offset (int, optional): 偏移量. Defaults to 0.
             head_num (int, optional): 要跑的数据总量. Defaults to None.
         """
+        self.print_task()
         item_iter = self.get_data()
         item_iter = self.clip_data(item_iter, offset, head_num)
         item_iter = self.exec_tasks(item_iter)

@@ -54,7 +54,6 @@ class DataParallel:
             yield data
       
 
-
     @interrupt_catch
     def work(self, work_done_value, work_i:int):
         """[summary]
