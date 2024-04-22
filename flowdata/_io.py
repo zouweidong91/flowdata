@@ -95,7 +95,7 @@ class ExcelTool:
         return {k:item[k] for k in item.keys()}
 
     @classmethod
-    def _write(cls, file_path, data:List[list], columns:list, sheet_name='Sheet1', width=10):
+    def _write(cls, data:List[list], file_path, columns:list, sheet_name='Sheet1', width=10):
         df = pd.DataFrame(data, columns=columns)
 
         # 设置列宽
@@ -123,7 +123,7 @@ class ExcelTool:
 
             if not columns:
                 columns = item.keys()
-
+                
             D.append(
                 [item[k] for k in columns]
             )
@@ -134,5 +134,5 @@ class ExcelTool:
         if not columns:
             return
             
-        cls.write(file_path, D, columns, width=width)
+        cls._write(D, file_path, columns, width=width)
 

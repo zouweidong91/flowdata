@@ -12,6 +12,8 @@ pip install flowdata
 
 
 # Quick Start
+## 数据读取支持
+* 简单分装了txt, jsonl, excel文件的读写接口。请参考FileTool, JsonlTool, ExcelTool类。
 
 ## 1、单任务
 代码中通过add_task将任务加载到任务流中，且可以根据需要指定不同进程数量
