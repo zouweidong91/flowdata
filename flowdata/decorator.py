@@ -2,12 +2,12 @@
 """
 常用装饰器
 """
-
 import functools
 import os
 import threading
 import time
 import traceback
+from concurrent import futures
 
 from ._logger import logger
 
@@ -36,6 +36,19 @@ def timer(info="", threshold=0.5):
             return res
         return wrapper
     return _timer
+
+
+# 超时判断 此种方式只是会跑出超时异常，但是func依然会继续执行，直到结束
+# flowdata多进程模式下，bert推理任务不在线程池执行会导致卡死，什么原因 TODO 
+def timeout(seconds=float('inf'), ):
+    executor = futures.ThreadPoolExecutor(10)
+    def decorator(func):
+        @functools.wraps(func)
+        def wrapper(*args, **kw):
+            future = executor.submit(func, *args, **kw)
+            return future.result(timeout=seconds)
+        return wrapper
+    return decorator
 
 
 def err_catch(info="", level='error'):
