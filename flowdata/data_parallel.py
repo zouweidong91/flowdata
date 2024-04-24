@@ -30,8 +30,8 @@ class DataParallel:
         self.args = args
         self.kwargs = kwargs
 
-        self.pip_in = mp.Queue(MAX_QUEUE_SIZE)  # 输入pip
-        self.pip_out = mp.Queue(MAX_QUEUE_SIZE)  # 数据处理后输出pip   
+        self.queue_in = mp.Queue(MAX_QUEUE_SIZE)  # 接收数据的queue
+        self.queue_out = mp.Queue(MAX_QUEUE_SIZE)  # 数据处理后输出queue  
         self.p_list: List[mp.Process] = []
         
 
@@ -40,15 +40,15 @@ class DataParallel:
         """数据放入队列
         """
         for item in self.item_iter_fn():
-            self.pip_in.put(item)
-        self.pip_in.put(FLAG.END)   # 队列放入终止标志
+            self.queue_in.put(item)
+        self.queue_in.put(FLAG.END)   # 队列放入终止标志
 
 
     def send_data(self):
         """数据从队列取出
         """
         while True:
-            data = self.pip_out.get(block=True, timeout=None)
+            data = self.queue_out.get(block=True, timeout=None)
             if data == FLAG.END:
                 break
             yield data
@@ -63,19 +63,19 @@ class DataParallel:
             work_i ([int]): [进程索引id，外部任务可能用到]
         """
         while True:
-            data = self.pip_in.get(block=True, timeout=None)
+            data = self.queue_in.get(block=True, timeout=None)
             if data == FLAG.END:
-                self.pip_in.put(FLAG.END)  # 解决多进程退出问题
+                self.queue_in.put(FLAG.END)  # 解决多进程退出问题
                 break
 
             data = self.process_fn(data, work_i=work_i, *self.args, **self.kwargs)
-            self.pip_out.put(data)
+            self.queue_out.put(data)
 
         with work_done_value.get_lock():
             work_done_value.value += 1
 
             if work_done_value.value >= self.work_num:
-                self.pip_out.put(FLAG.END)   # 队列放入终止标志
+                self.queue_out.put(FLAG.END)   # 队列放入终止标志
 
 
     def run(self):
