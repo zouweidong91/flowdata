@@ -1,0 +1,23 @@
+import time
+import unittest
+
+from flowdata import DataParallel
+
+
+class DataParallelTest(unittest.TestCase):
+    def item_iter_fn(self):
+        for i in range(20):
+            yield {"id": i}
+
+    def process_fn(self, item, *args, **kwargs):
+        time.sleep(.2)
+        item['id'] += 1
+        return item
+
+    def test_dataParallel(self):
+        with DataParallel(item_iter_fn=self.item_iter_fn, work_num=2, process_fn=self.process_fn) as t:
+            for index, item in enumerate(t.send_data()):
+                print(item)
+
+if __name__ == "__main__":
+    unittest.main()

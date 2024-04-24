@@ -39,9 +39,9 @@ def timer(info="", threshold=0.5):
 
 
 # 超时判断 此种方式只是会跑出超时异常，但是func依然会继续执行，直到结束
-# flowdata多进程模式下，bert推理任务不在线程池执行会导致卡死，什么原因 TODO 
-def timeout(seconds=float('inf'), ):
-    executor = futures.ThreadPoolExecutor(10)
+# task_fn加上此装饰器，解决torch与python多进程不兼容导致卡死 ？？
+def timeout(seconds=10000, works=2):
+    executor = futures.ThreadPoolExecutor(works)
     def decorator(func):
         @functools.wraps(func)
         def wrapper(*args, **kw):
