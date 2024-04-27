@@ -41,9 +41,11 @@ class FlowBase:
             num += 1
             if head_num and num > head_num: break
             
-            yield item
             if self.verbose:
                 logger.info("准备处理第%s条数据", i)
+            
+            yield item
+
         
 
     def count_data(self, item_iter):

@@ -26,3 +26,8 @@ def add_task(work_num:int=1):
         return wrapper
     return _add_task
 
+
+
+def clear_task():
+    while TASK_LIST:
+        TASK_LIST.pop()
