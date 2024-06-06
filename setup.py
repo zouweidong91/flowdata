@@ -4,7 +4,7 @@ with open('README.md', 'r', encoding='utf-8') as f:
     long_description = f.read()
 
 NAME = 'flowdata'
-VERSION = '0.1.4'
+VERSION = '0.1.5'
 DESCRIPTION = '流式数据简易处理包'
 EMAIL = 'zouweidong72@gmail.com'
 AUTHOR = 'zouweidong'

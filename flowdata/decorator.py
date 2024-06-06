@@ -1,7 +1,7 @@
-
 """
 常用装饰器
 """
+
 import functools
 import os
 import threading
@@ -19,22 +19,37 @@ def timer(info="", threshold=0.5):
         info (str, optional): 辅助日志. Defaults to "".
         threshold (float, optional): 超过此值，打印warning日志. Defaults to 0.5.
     """
+
     def _timer(func):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
             start = time.time()
             res = func(*args, **kwargs)
-            
-            verbose = kwargs.get('verbose', True)
+
+            verbose = kwargs.get("verbose", True)
             if verbose:
                 if time.time() - start < threshold:
-                    logger.debug(f'执行函数[%s]%s，耗时 %f 秒 进程号 %s，线程号 %s', func.__name__, f"[info: {info}]" if info else "",
-                                time.time() - start, os.getpid(), threading.currentThread().ident)
+                    logger.debug(
+                        f"执行函数[%s]%s，耗时 %f 秒 进程号 %s，线程号 %s",
+                        func.__name__,
+                        f"[info: {info}]" if info else "",
+                        time.time() - start,
+                        os.getpid(),
+                        threading.currentThread().ident,
+                    )
                 else:
-                    logger.warning(f'执行函数[%s]%s，耗时 %f 秒 进程号 %s，线程号 %s', func.__name__, f"[info: {info}]" if info else "",
-                                time.time() - start, os.getpid(), threading.currentThread().ident)
+                    logger.warning(
+                        f"执行函数[%s]%s，耗时 %f 秒 进程号 %s，线程号 %s",
+                        func.__name__,
+                        f"[info: {info}]" if info else "",
+                        time.time() - start,
+                        os.getpid(),
+                        threading.currentThread().ident,
+                    )
             return res
+
         return wrapper
+
     return _timer
 
 
@@ -42,23 +57,27 @@ def timer(info="", threshold=0.5):
 # task_fn加上此装饰器，解决torch与python多进程不兼容导致卡死 ？？
 def timeout(seconds=10000, works=2):
     executor = futures.ThreadPoolExecutor(works)
+
     def decorator(func):
         @functools.wraps(func)
         def wrapper(*args, **kw):
             future = executor.submit(func, *args, **kw)
             return future.result(timeout=seconds)
+
         return wrapper
+
     return decorator
 
 
-def err_catch(info="", level='error'):
+def err_catch(info="", level="error"):
     """异常捕获装饰器
 
     Args:
         info (str, optional): 辅助日志. Defaults to "".
         level (str, optional): 异常信息等级. Defaults to 'error'.
     """
-    level_func = logger.error if level=='error' else logger.warning
+    level_func = logger.error if level == "error" else logger.warning
+
     def decorator(func):
         @functools.wraps(func)
         def decorated(*args, **kwargs):
@@ -70,7 +89,9 @@ def err_catch(info="", level='error'):
                 for item in traceback.format_list(extract_list):
                     level_func(item.strip())
                 level_func(f"{info} args:{args}, kwargs: {kwargs}: {err}")
+
         return decorated
+
     return decorator
 
 
@@ -80,10 +101,17 @@ def interrupt_catch(func):
             return func(*args, **kwargs)
         except KeyboardInterrupt:
             pass
+
     return wrapper
 
 
-def handle_exception(max_retry:int=None, timeout=300, interval=5, error_detail_level=1, is_throw_error=False):
+def handle_exception(
+    max_retry: int = None,
+    timeout=300,
+    interval=5,
+    error_detail_level=1,
+    is_throw_error=False,
+):
     """重试机制装饰器
 
     Args:
@@ -94,11 +122,11 @@ def handle_exception(max_retry:int=None, timeout=300, interval=5, error_detail_l
         is_throw_error (bool, optional): 重试失败时，是否抛出异常. Defaults to False.
 
     """
-    print_success_info = '[触发重试机制-第%s次成功]: 调用方法 --> [%s]'
-    print_error_info = '[触发重试机制-第%s次失败]: 调用方法 --> [%s], \n%s'
+    print_success_info = "[触发重试机制-第%s次成功]: 调用方法 --> [%s]"
+    print_error_info = "[触发重试机制-第%s次失败]: 调用方法 --> [%s], \n%s"
 
     if error_detail_level not in [0, 1, 2]:
-        raise Exception('error_detail_level参数必须设置为0 、1 、2')
+        raise Exception("error_detail_level参数必须设置为0 、1 、2")
 
     def _handle_exception(func):
         @functools.wraps(func)
@@ -107,7 +135,9 @@ def handle_exception(max_retry:int=None, timeout=300, interval=5, error_detail_l
             t0 = time.time()  # pylint: disable=C0103
             while True:
                 # 达到最大重试次数或超时就退出
-                if (not (max_retry is None) and cnt > max_retry) or (time.time() - t0) > timeout:
+                if (not (max_retry is None) and cnt > max_retry) or (
+                    time.time() - t0
+                ) > timeout:
                     break
                 try:
                     result = func(*args, **kwargs)
@@ -116,17 +146,28 @@ def handle_exception(max_retry:int=None, timeout=300, interval=5, error_detail_l
                     return result
 
                 except Exception as e:  # pylint: disable=C0103,W0703
-                    error_info = ''
+                    error_info = ""
                     if error_detail_level == 0:
-                        error_info = '错误类型是：' + str(e.__class__) + '  ' + str(e)
+                        error_info = "错误类型是：" + str(e.__class__) + "  " + str(e)
                     elif error_detail_level == 1:
-                        error_info = '错误类型是：' + str(e.__class__) + '  ' + traceback.format_exc(limit=3)
+                        error_info = (
+                            "错误类型是："
+                            + str(e.__class__)
+                            + "  "
+                            + traceback.format_exc(limit=3)
+                        )
                     elif error_detail_level == 2:
-                        error_info = '错误类型是：' + str(e.__class__) + '  ' + traceback.format_exc()
+                        error_info = (
+                            "错误类型是："
+                            + str(e.__class__)
+                            + "  "
+                            + traceback.format_exc()
+                        )
 
                     cnt += 1
-                    if (not (max_retry is None) and cnt > max_retry) \
-                            or (time.time() - t0) > timeout:  # 达到超时时间，
+                    if (not (max_retry is None) and cnt > max_retry) or (
+                        time.time() - t0
+                    ) > timeout:  # 达到超时时间，
                         logger.error(print_error_info, cnt, func.__name__, error_info)
                         if is_throw_error:  # 重新抛出错误
                             raise e
@@ -138,8 +179,7 @@ def handle_exception(max_retry:int=None, timeout=300, interval=5, error_detail_l
     return _handle_exception
 
 
-
-def tps(step:int=100):
+def tps(step: int = 100):
     """计算数据流处理tps
         total_tps：任务处理开始总的tps
         current_tps：当前时刻的tps
@@ -147,27 +187,36 @@ def tps(step:int=100):
     Args:
         step (int, optional): 每隔step步计算一次. Defaults to 100.
     """
+
     def _tps(func):
         @functools.wraps(func)
         def wrapper(instance=None, item_iter=None, **kwargs):
             def iter_fn(item_iter):
                 s_time = time.time()
                 s_time_2 = time.time()
-                
+
                 for index, item in enumerate(item_iter):
                     if index and index % step == 0:
                         total_tps = round(index / (time.time() - s_time), 3)
                         current_tps = round(step / (time.time() - s_time_2), 3)
 
                         s_time_2 = time.time()
-                        logger.info('【 完成量: %s 】, 【 total_tps: %s 】, 【 current_tps: %s 】', index, total_tps, current_tps)
+                        logger.info(
+                            "【 完成量: %s 】, 【 total_tps: %s 】, 【 current_tps: %s 】",
+                            index,
+                            total_tps,
+                            current_tps,
+                        )
 
                     yield item
 
-            if instance is None: # 装饰函数 必须关键字参数形式调用 foo(item_iter=range(10))
+            if (
+                instance is None
+            ):  # 装饰函数 必须关键字参数形式调用 foo(item_iter=range(10))
                 return func(iter_fn(item_iter), **kwargs)
             else:  # 装饰类中函数
                 return func(instance, iter_fn(item_iter), **kwargs)
-        return wrapper
-    return _tps
 
+        return wrapper
+
+    return _tps

@@ -13,7 +13,7 @@ pip install flowdata
 
 # Quick Start
 ## 数据读取支持
-* 简单分装了txt, jsonl, excel文件的读写接口。请参考FileTool, JsonlTool, ExcelTool类。
+* 简单封装了txt, json, jsonl, excel文件的读写接口。请参考FileTool, JsonTool, JsonlTool, ExcelTool类。
 
 ## 1、单任务
 代码中通过add_task将任务加载到任务流中，且可以根据需要指定不同进程数量
@@ -41,7 +41,7 @@ TaskFlow().main()
 ```
 
 ## 2、多任务
-假设一个处理数据的任务可以细分为多个子任务，例如，task_a, task_b。任务执行按照task的添加顺序执行。
+假设一个处理数据的任务可以细分为多个子任务，例如，task_a, task_b。任务执行按照task的添加顺序执行。前一个任务的输出是下一个任务的输入。
 
 ```python
 import time
