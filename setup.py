@@ -25,6 +25,6 @@ setup(
     python_requires='>=3.6',
     install_requires=[
     'pandas',
-    'XlsxWriter==3.0.3'
+    'XlsxWriter>=3.0.3'
 ],
 )
