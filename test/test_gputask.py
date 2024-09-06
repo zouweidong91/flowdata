@@ -1,11 +1,12 @@
 import time
 import unittest
 
-from flowdata import FlowBase, add_task
-from flowdata.decorator import err_catch
 import torch
 import torch.nn.functional as F
 import torch.nn as nn
+
+from flowdata import FlowBase, add_task
+from flowdata.decorator import err_catch
 
 
 class SimpleModel(nn.Module):
