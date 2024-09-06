@@ -14,15 +14,16 @@ class Task:
         default=None, metadata={"help": "任务函数，由add_task添加至task_list"}
     )
     work_num: int = field(default=1, metadata={"help": "进程数量"})
+    dummy: bool = field(default=False, metadata={"help": "False是多进程，True则是多线程"})
 
 
 TASK_LIST: List[Task] = []
 
 
 # 添加至任务列表
-def add_task(work_num: int = 1):
+def add_task(work_num: int = 1, dummy=False):
     def _add_task(func):
-        TASK_LIST.append(Task(func.__qualname__.split(".")[0], func.__name__, work_num))
+        TASK_LIST.append(Task(func.__qualname__.split(".")[0], func.__name__, work_num, dummy))
 
         @functools.wraps(func)
         def wrapper(*args, **kwargs):

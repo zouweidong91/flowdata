@@ -63,9 +63,9 @@ class FlowBase:
         task_func = getattr(self, task.func_name)
         item_iter_fn = lambda: item_iter
         with DataParallel(
-            item_iter_fn=item_iter_fn, work_num=task.work_num, process_fn=task_func
-        ) as t:
-            for index, item in enumerate(t.send_data()):
+            item_iter_fn=item_iter_fn, work_num=task.work_num, process_fn=task_func, dummy=task.dummy
+        ) as _item_iter:
+            for index, item in enumerate(_item_iter):
                 yield item
 
     def exec_task(self, item_iter, task: Task):

@@ -25,7 +25,7 @@ class TaskFlow(FlowBase):
         return item
 
     def get_data(self):
-        for i in range(20):
+        for i in range(200):
             yield {"id": i}
 
     def save_data(self, item_iter):
