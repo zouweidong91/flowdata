@@ -1,7 +1,7 @@
 """
 通用跑数任务流
 """
-
+import heapq
 from collections import Counter
 from typing import Generator
 
@@ -12,8 +12,15 @@ from .task import TASK_LIST, Task
 
 
 class FlowBase:
-    def __init__(self, verbose=True):
+    def __init__(self, verbose=True, keep_order=False):
+        """[summary]
+
+        Args:
+            verbose ([bool]): [是否打印日志]
+            keep_order ([bool]): [是否按照输入顺序返回，True时，无法流式保存数据]
+        """
         self.verbose = verbose
+        self.keep_order = keep_order
         self.counter = Counter()
 
     def get_data(self) -> Generator[dict, None, None]:
@@ -32,6 +39,8 @@ class FlowBase:
 
             if i < offset:
                 continue
+
+            item['__origin_id'] = num
             num += 1
             if head_num and num > head_num:
                 break
@@ -44,6 +53,7 @@ class FlowBase:
     def count_data(self, item_iter):
         """任务执行统计"""
         for item in item_iter:
+            item.pop('__origin_id')
             self.counter["total_num"] += 1
             if not item:
                 self.counter["error_num"] += 1
@@ -96,6 +106,38 @@ class FlowBase:
             num += 1
             logger.info("task_%s: %s", num, task)
 
+    def _keep_order(self, item_iter):
+        heap_items = []
+        order_id = 0 # 当前应该返回的item id
+
+        def get_order_item(item):
+            nonlocal order_id
+
+            # 当前 item 顺序正确，直接返回
+            if item['__origin_id'] == order_id:
+                order_id += 1
+                return item
+            
+            # 当前 item 顺序不正确，放入堆中
+            heapq.heappush(heap_items, (item['__origin_id'], item))
+            # 从堆中取出一个 h_item
+            _, h_item = heapq.heappop(heap_items)
+            if h_item['__origin_id'] == order_id:
+                order_id += 1
+                return h_item
+            
+            # h_item 顺序也不正确，再次放入堆中
+            heapq.heappush(heap_items, (h_item['__origin_id'], h_item))
+
+        for item in item_iter:
+            _item = get_order_item(item)
+            if _item:
+                yield _item
+
+        while heap_items:
+            _, h_item = heapq.heappop(heap_items)
+            yield h_item
+
     @timer("main")
     @interrupt_catch
     def main(self, offset: int = 0, head_num: int = None):
@@ -109,6 +151,10 @@ class FlowBase:
         item_iter = self.get_data()
         item_iter = self.clip_data(item_iter, offset, head_num)
         item_iter = self.exec_tasks(item_iter)
+        
+        if self.keep_order:
+            item_iter = self._keep_order(item_iter)
+        
         item_iter = self.count_data(item_iter)
         self.save_data(item_iter)
 

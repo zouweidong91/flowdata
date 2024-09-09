@@ -28,7 +28,7 @@ class TaskFlow(FlowBase):
 
 class FlowTest(unittest.TestCase):
     def test_flow(self):
-        TaskFlow(verbose=False).main()
+        TaskFlow(verbose=False, keep_order=True).main()
 
 
 if __name__ == "__main__":

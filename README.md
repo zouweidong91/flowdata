@@ -1,7 +1,8 @@
 # flowdata
 流式数据简易处理工具
 
-本项目支持对流式数据的处理进行多进程/线程加速。注意流式处理返回结果是无序的。
+
+本项目支持对流式数据的处理进行多进程/线程加速。
 
 
 # 安装 flowdata
@@ -19,27 +20,33 @@ pip install flowdata
 代码中通过add_task将任务加载到任务流中，且可以根据需要指定不同进程/线程数量
 
 add_task: dummy 默认为 False，参数设置为 True 开启线程模式。
+流式处理返回结果默认是无序的。如果需要有序返回需指定参数: keep_order=True
 
 ```python
 import time
-from flowdata import FlowBase
-from flowdata import add_task
+import random
+from flowdata import FlowBase, add_task
+from flowdata.decorator import err_catch
 
+# 单个任务
 class TaskFlow(FlowBase):
-    @add_task(work_num=1)
-    def task(self, item: dict, *args, **kwargs) -> dict:
-        time.sleep(.2)
-        item['id'] += 1
+
+    @add_task(work_num=4, dummy=False)
+    @err_catch()
+    def add_1(self, item: dict, *args, **kwargs) -> dict:
+        time.sleep(random.random())
+        item["r"] = 2
         return item
 
     def get_data(self):
-        for i in range(20):
+        for i in range(30):
             yield {"id": i}
 
     def save_data(self, item_iter):
-        list(item_iter)
+        for item in item_iter:
+            print(item)
 
-TaskFlow().main()
+TaskFlow(verbose=False, keep_order=True).main()
 ```
 
 ## 2、多任务

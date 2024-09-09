@@ -44,7 +44,7 @@ def timer(info="", threshold=0.5):
                         f"[info: {info}]" if info else "",
                         time.time() - start,
                         os.getpid(),
-                        threading.currentThread().ident,
+                        threading.current_thread().ident,
                     )
             return res
 
