@@ -17,10 +17,11 @@ pip install flowdata
 * 简单封装了txt, json, jsonl, excel文件的读写接口。请参考FileTool, JsonTool, JsonlTool, ExcelTool类。
 
 ## 1、单任务
-代码中通过add_task将任务加载到任务流中，且可以根据需要指定不同进程/线程数量
+* 代码中通过add_task将任务加载到任务流中，且可以根据需要指定不同进程/线程数量
 
-add_task: dummy 默认为 False，参数设置为 True 开启线程模式。
-流式处理返回结果默认是无序的。如果需要有序返回需指定参数: keep_order=True
+* add_task: dummy 默认为 False，参数设置为 True 开启线程模式。
+
+* 流式处理返回结果默认是无序的。如果需要有序返回需指定参数: keep_order=True
 
 ```python
 import time
@@ -50,7 +51,8 @@ TaskFlow(verbose=False, keep_order=True).main()
 ```
 
 ## 2、多任务
-假设一个处理数据的任务可以细分为多个子任务，例如，task_a, task_b。任务执行按照task的添加顺序执行。前一个任务的输出是下一个任务的输入。
+* 假设一个处理数据的任务可以细分为多个子任务，例如，task_a, task_b。任务执行按照task的添加顺序执行。
+* 前一个任务的输出是下一个任务的输入。
 
 ```python
 import time
@@ -82,7 +84,7 @@ TaskFlow().main()
 ```
 
 ## 3、multigpu任务
-gpu任务，无法在子进程中使用主进程创建的模型，因此需要切换至线程模式
+* gpu任务，无法在子进程中使用主进程创建的模型，因此需要切换至线程模式
 
 ```python
 import time
