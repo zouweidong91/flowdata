@@ -4,6 +4,7 @@ import unittest
 import torch
 import torch.nn.functional as F
 import torch.nn as nn
+from tqdm import tqdm
 
 from flowdata import FlowBase, add_task
 from flowdata.decorator import err_catch
@@ -42,13 +43,13 @@ class TaskFlow(FlowBase):
         model = self.models[index]
         ipt = item['ipt']
         rst = model(ipt)
-        print(rst)
+        # print(rst)
         item['rst'] = rst
         return item
 
     def get_data(self):
-        for i in range(20000):
-            yield {"id": i, "ipt": torch.randn(2, 100).cuda()}
+        for i in tqdm(range(20000)):
+            yield {"id": i, "ipt": torch.randn(2, 1000).cuda()}
 
     def save_data(self, item_iter):
         list(item_iter)
@@ -56,7 +57,7 @@ class TaskFlow(FlowBase):
 
 class FlowTest(unittest.TestCase):
     def test_flow(self):
-        TaskFlow(verbose=True).main()
+        TaskFlow(verbose=False).main()
 
 
 if __name__ == "__main__":

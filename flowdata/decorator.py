@@ -180,7 +180,7 @@ def handle_exception(
 
 
 def tps(step: int = 100):
-    """计算数据流处理tps
+    """计算数据流处理tps   直接用tqdm替代即可
         total_tps：任务处理开始总的tps
         current_tps：当前时刻的tps
 

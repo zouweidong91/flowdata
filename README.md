@@ -84,6 +84,7 @@ import unittest
 import torch
 import torch.nn.functional as F
 import torch.nn as nn
+from tqdm import tqdm
 
 from flowdata import FlowBase, add_task
 from flowdata.decorator import err_catch
@@ -125,7 +126,7 @@ class TaskFlow(FlowBase):
         return item
 
     def get_data(self):
-        for i in range(20000):
+        for i in tqdm(range(20000)):
             yield {"id": i, "ipt": torch.randn(2, 100).cuda()}
 
     def save_data(self, item_iter):
