@@ -25,9 +25,11 @@ pip install flowdata
 
 ```python
 import time
+import unittest
 import random
 from flowdata import FlowBase, add_task
 from flowdata.decorator import err_catch
+
 
 # 单个任务
 class TaskFlow(FlowBase):
@@ -37,6 +39,8 @@ class TaskFlow(FlowBase):
     def add_1(self, item: dict, *args, **kwargs) -> dict:
         time.sleep(random.random())
         item["r"] = 2
+        if item["id"] == 5:
+            raise Exception("ha")
         return item
 
     def get_data(self):
@@ -56,29 +60,39 @@ TaskFlow(verbose=False, keep_order=True).main()
 
 ```python
 import time
-from flowdata import FlowBase
-from flowdata import add_task
+import unittest
+import random
+
+from flowdata import FlowBase, add_task
+from flowdata.decorator import err_catch
+
 
 # 多个任务
 class TaskFlow(FlowBase):
+
+    @err_catch()
     @add_task(work_num=2)
-    def task_a(self, item: dict, *args, **kwargs) -> dict:
-        time.sleep(.2)
-        item['id'] += 1
+    def task_1(self, item: dict, *args, **kwargs) -> dict:
+        time.sleep(random.random())
+        item["id"] += 1
+        if item["id"] == 5:
+            raise Exception("ha")
         return item
 
+    @err_catch()
     @add_task(work_num=2)
-    def task_b(self, item: dict, *args, **kwargs) -> dict:
-        time.sleep(.2)
-        item['id'] += 1
+    def task_2(self, item: dict, *args, **kwargs) -> dict:
+        time.sleep(0.2)
+        item["id"] += 1
         return item
 
     def get_data(self):
-        for i in range(20):
+        for i in range(100):
             yield {"id": i}
 
     def save_data(self, item_iter):
-        list(item_iter)
+        for item in item_iter:
+            print(item)
 
 TaskFlow().main()
 ```
@@ -98,6 +112,7 @@ from tqdm import tqdm
 from flowdata import FlowBase, add_task
 from flowdata.decorator import err_catch
 
+
 class SimpleModel(nn.Module):
     def __init__(self, input_size, hidden_size, num_classes):
         super(SimpleModel, self).__init__()
@@ -112,30 +127,34 @@ class SimpleModel(nn.Module):
         return x
 
 
+# 单个任务
 class TaskFlow(FlowBase):
     def __init__(self, verbose=True):
         super().__init__(verbose)
         self.init_models()
 
     def init_models(self):
-        device_ids = [0, 0, 0]
+        device_ids = [0, 1, 2, 3]
         self.num_gpus = len(device_ids)
-        self.models = [SimpleModel(100, 2000, 2).cuda(gpu) for gpu in device_ids]
+        self.models = [
+            (SimpleModel(100, 2000, 2).cuda(device_id), device_id)
+            for device_id in device_ids
+        ]
 
-    @add_task(work_num=3, dummy=True)
+    @add_task(work_num=16, dummy=True)
     @err_catch()
-    def add_1(self, item: dict, work_i:int, *args, **kwargs) -> dict:
+    def add_1(self, item: dict, work_i: int, *args, **kwargs) -> dict:
         time.sleep(0.2)
         index = work_i % self.num_gpus
-        model = self.models[index]
-        ipt = item['ipt']
-        rst = model(ipt)
-        print(rst)
-        item['rst'] = rst
+        model, device_id = self.models[index]
+        ipt = item["ipt"]
+        rst = model(ipt.to(device_id))
+        # print(rst)
+        item["rst"] = rst
         return item
 
     def get_data(self):
-        for i in tqdm(range(20000)):
+        for i in tqdm(range(2000)):
             yield {"id": i, "ipt": torch.randn(2, 100).cuda()}
 
     def save_data(self, item_iter):
