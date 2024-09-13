@@ -16,7 +16,10 @@ class DataParallelTest(unittest.TestCase):
 
     def test_dataParallel(self):
         with DataParallel(
-            item_iter_fn=self.item_iter_fn, work_num=2, process_fn=self.process_fn, dummy=False
+            item_iter_fn=self.item_iter_fn,
+            work_num=2,
+            process_fn=self.process_fn,
+            dummy=False,
         ) as data_iter:
             for index, item in enumerate(data_iter):
                 print(item)

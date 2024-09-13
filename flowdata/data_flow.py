@@ -1,6 +1,7 @@
 """
 通用跑数任务流
 """
+
 import heapq
 from collections import Counter
 from typing import Generator
@@ -8,7 +9,7 @@ from typing import Generator
 from ._logger import logger
 from .data_parallel import DataParallel
 from .decorator import err_catch, interrupt_catch, timer, tps
-from .task import TASK_LIST, Task
+from .task import TASK_LIST, Task, get_max_work_nums
 
 
 class FlowBase:
@@ -40,7 +41,7 @@ class FlowBase:
             if i < offset:
                 continue
 
-            item['__origin_id'] = num
+            item["__origin_id"] = num
             num += 1
             if head_num and num > head_num:
                 break
@@ -51,9 +52,10 @@ class FlowBase:
             yield item
 
     def count_data(self, item_iter):
-        """任务执行统计"""
+        """任务执行统计
+        过滤掉 None 的 item
+        """
         for item in item_iter:
-            item.pop('__origin_id')
             self.counter["total_num"] += 1
             if not item:
                 self.counter["error_num"] += 1
@@ -73,7 +75,10 @@ class FlowBase:
         task_func = getattr(self, task.func_name)
         item_iter_fn = lambda: item_iter
         with DataParallel(
-            item_iter_fn=item_iter_fn, work_num=task.work_num, process_fn=task_func, dummy=task.dummy
+            item_iter_fn=item_iter_fn,
+            work_num=task.work_num,
+            process_fn=task_func,
+            dummy=task.dummy,
         ) as _item_iter:
             for index, item in enumerate(_item_iter):
                 yield item
@@ -107,27 +112,34 @@ class FlowBase:
             logger.info("task_%s: %s", num, task)
 
     def _keep_order(self, item_iter):
+        max_work_nums = get_max_work_nums()  # 任务中最大进程数量
         heap_items = []
-        order_id = 0 # 当前应该返回的item id
+        order_id = 0  # 当前应该返回的item id
 
         def get_order_item(item):
             nonlocal order_id
 
             # 当前 item 顺序正确，直接返回
-            if item['__origin_id'] == order_id:
+            if item["__origin_id"] == order_id:
                 order_id += 1
                 return item
-            
+
             # 当前 item 顺序不正确，放入堆中
-            heapq.heappush(heap_items, (item['__origin_id'], item))
+            heapq.heappush(heap_items, (item["__origin_id"], item))
             # 从堆中取出一个 h_item
             _, h_item = heapq.heappop(heap_items)
-            if h_item['__origin_id'] == order_id:
+            if h_item["__origin_id"] == order_id:
                 order_id += 1
                 return h_item
-            
+
             # h_item 顺序也不正确，再次放入堆中
-            heapq.heappush(heap_items, (h_item['__origin_id'], h_item))
+            heapq.heappush(heap_items, (h_item["__origin_id"], h_item))
+
+            # heap_items 累积过多 items 时，强制更改 order_id
+            if len(heap_items) >= max_work_nums + 3:
+                _, h_item = heapq.heappop(heap_items)
+                order_id = h_item["__origin_id"]
+                return h_item
 
         for item in item_iter:
             _item = get_order_item(item)
@@ -137,6 +149,12 @@ class FlowBase:
         while heap_items:
             _, h_item = heapq.heappop(heap_items)
             yield h_item
+
+    def rm_keys(self, item_iter):
+        """去掉多余key"""
+        for item in item_iter:
+            item.pop("__origin_id")
+            yield item
 
     @timer("main")
     @interrupt_catch
@@ -151,11 +169,12 @@ class FlowBase:
         item_iter = self.get_data()
         item_iter = self.clip_data(item_iter, offset, head_num)
         item_iter = self.exec_tasks(item_iter)
-        
+        item_iter = self.count_data(item_iter)
+
         if self.keep_order:
             item_iter = self._keep_order(item_iter)
-        
-        item_iter = self.count_data(item_iter)
+
+        item_iter = self.rm_keys(item_iter)
         self.save_data(item_iter)
 
         print()

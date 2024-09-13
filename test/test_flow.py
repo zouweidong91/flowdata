@@ -13,8 +13,8 @@ class TaskFlow(FlowBase):
     def add_1(self, item: dict, *args, **kwargs) -> dict:
         time.sleep(random.random())
         item["r"] = 2
-        # if item["id"] == 5:
-        #     raise Exception("ha")
+        if item["id"] == 5:
+            raise Exception("ha")
         return item
 
     def get_data(self):

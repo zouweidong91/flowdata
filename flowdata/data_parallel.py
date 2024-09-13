@@ -15,7 +15,13 @@ class DataParallel:
     """数据流多进程并行处理逻辑"""
 
     def __init__(
-        self, item_iter_fn, work_num: int, process_fn: callable, dummy:bool=False, *args, **kwargs
+        self,
+        item_iter_fn,
+        work_num: int,
+        process_fn: callable,
+        dummy: bool = False,
+        *args,
+        **kwargs
     ):
         """[summary]
 
@@ -81,7 +87,7 @@ class DataParallel:
 
             if work_done_value.value >= self.work_num:
                 self.queue_out.put(FLAG.END)  # 队列放入终止标志
-    
+
     def run(self):
         m = self.Manager()
 
@@ -100,7 +106,6 @@ class DataParallel:
 
         for i in self.send_data():
             yield i
-
 
     def __enter__(self):
         return self.run()
