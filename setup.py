@@ -4,7 +4,7 @@ with open("README.md", "r", encoding="utf-8") as f:
     long_description = f.read()
 
 NAME = "flowdata"
-VERSION = "0.1.6"
+VERSION = "0.1.7"
 DESCRIPTION = "流式数据简易处理包"
 EMAIL = "zouweidong72@gmail.com"
 AUTHOR = "zouweidong"
@@ -21,5 +21,5 @@ setup(
     long_description_content_type="text/markdown",
     url="https://github.com/zouweidong91/flowdata",
     python_requires=">=3.6",
-    install_requires=["pandas", "XlsxWriter>=3.0.3", "tqdm"],
+    install_requires=["pandas", "XlsxWriter>=3.0.3", "tqdm", "openpyxl"],
 )
